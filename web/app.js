@@ -97,12 +97,30 @@ async function renderDay() {
     li.querySelector("input").addEventListener("change", async (e) => {
       const res = await eel.set_completion(t.id, day, e.target.checked)();
       if (!res.ok) alert(res.error);
-      await refreshAll();
+      await async function loadQuote() {
+  const q = await eel.get_quote()();
+  if (!q) return; // offline or rate-limited: leave the quote area hidden
+  $("quote-text").textContent = q.text;
+  $("quote-author").textContent = q.author;
+  $("quote").hidden = false;
+}
+
+refreshAll();
+loadQuote();
     });
     li.querySelector(".del").addEventListener("click", async () => {
       if (!confirm(`Delete "${t.title}" and its history?`)) return;
       await eel.delete_task(t.id)();
-      await refreshAll();
+      await async function loadQuote() {
+  const q = await eel.get_quote()();
+  if (!q) return; // offline or rate-limited: leave the quote area hidden
+  $("quote-text").textContent = q.text;
+  $("quote-author").textContent = q.author;
+  $("quote").hidden = false;
+}
+
+refreshAll();
+loadQuote();
     });
     list.appendChild(li);
   });
@@ -115,7 +133,16 @@ async function refreshAll() {
 
 async function selectDay(iso) {
   state.selected = iso;
-  await refreshAll();
+  await async function loadQuote() {
+  const q = await eel.get_quote()();
+  if (!q) return; // offline or rate-limited: leave the quote area hidden
+  $("quote-text").textContent = q.text;
+  $("quote-author").textContent = q.author;
+  $("quote").hidden = false;
+}
+
+refreshAll();
+loadQuote();
 }
 
 $("btn-today").addEventListener("click", () => selectDay(state.today));
@@ -129,7 +156,25 @@ $("add-form").addEventListener("submit", async (e) => {
   $("t-title").value = "";
   $("t-desc").value = "";
   $("t-title").focus();
-  await refreshAll();
-});
+  await async function loadQuote() {
+  const q = await eel.get_quote()();
+  if (!q) return; // offline or rate-limited: leave the quote area hidden
+  $("quote-text").textContent = q.text;
+  $("quote-author").textContent = q.author;
+  $("quote").hidden = false;
+}
 
 refreshAll();
+loadQuote();
+});
+
+async function loadQuote() {
+  const q = await eel.get_quote()();
+  if (!q) return; // offline or rate-limited: leave the quote area hidden
+  $("quote-text").textContent = q.text;
+  $("quote-author").textContent = q.author;
+  $("quote").hidden = false;
+}
+
+refreshAll();
+loadQuote();

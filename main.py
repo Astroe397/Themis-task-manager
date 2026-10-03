@@ -1,19 +1,8 @@
-import sys
-import subprocess
-
-try:
-    import eel
-except ImportError:
-    try:
-        # Runs `python -m pip install <package_name>`
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "eel"])
-        print(f"Successfully installed '{"eel"}'.")
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install '{"eel"}'. Error: {e}")
-
 """Progress tracker: Eel + SQLite.  Run with:  python main.py"""
+import json
 import os
 import sqlite3
+import urllib.request
 from contextlib import contextmanager
 from datetime import date, timedelta
 
@@ -106,6 +95,26 @@ def set_completion(task_id, day, done):
         else:
             c.execute("DELETE FROM completions WHERE task_id = ? AND day = ?", (task_id, day))
     return {"ok": True}
+
+
+# ---------- quote ----------
+@eel.expose
+def get_quote():
+    """Fetch a random quote from ZenQuotes. Returns None if offline or rate-limited."""
+    try:
+        req = urllib.request.Request(
+            "https://zenquotes.io/api/random", headers={"User-Agent": "progress-tracker"}
+        )
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        item = data[0]
+        text, author = item.get("q", "").strip(), item.get("a", "").strip()
+        # ZenQuotes returns a placeholder "Too many requests" quote when rate limited.
+        if not text or author.lower() == "zenquotes.io":
+            return None
+        return {"text": text, "author": author}
+    except Exception:
+        return None
 
 
 # ---------- stats ----------

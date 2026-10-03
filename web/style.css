@@ -112,6 +112,11 @@ main { max-width: 1100px; margin: 0 auto; padding: 28px 32px 48px; }
 .dot.not { background: var(--not-done); }
 .note { color: var(--muted); font-size: .8rem; margin: 16px 0 0; }
 
+/* quote */
+.quote { margin: 28px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
+.quote blockquote { margin: 0; font: italic 1.05rem/1.55 var(--serif); }
+.quote figcaption { margin-top: 8px; color: var(--muted); font-size: .88rem; }
+
 /* tasks + form */
 .work { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; margin-top: 36px; }
 .day-head { display: flex; align-items: baseline; justify-content: space-between; }
