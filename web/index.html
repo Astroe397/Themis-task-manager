@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Progress tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/eel.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <h1>Progress</h1>
+    <dl class="figures">
+      <div><dt>Current streak</dt><dd id="stat-streak">0 days</dd></div>
+      <div><dt>Perfect days</dt><dd id="stat-perfect">0</dd></div>
+      <div><dt>Days tracked</dt><dd id="stat-tracked">0</dd></div>
+    </dl>
+  </header>
+
+  <main>
+    <section class="overview" aria-labelledby="h-consistency">
+      <div class="consistency">
+        <h2 id="h-consistency">Daily consistency</h2>
+        <div class="heat-scroll">
+          <div class="months" id="months" aria-hidden="true"></div>
+          <div class="heat-wrap">
+            <div class="weekdays" aria-hidden="true"><span>Mon</span><span>Wed</span><span>Fri</span></div>
+            <div class="heat" id="heat" role="grid" aria-label="Completion by day"></div>
+          </div>
+        </div>
+        <div class="legend" aria-label="Colour key">
+          <span class="swatch missed"></span>Missed
+          <span class="swatch l1"></span><span class="swatch l2"></span><span class="swatch l3"></span><span class="swatch l4"></span>All done
+        </div>
+      </div>
+
+      <div class="pie-block">
+        <h2>Average day</h2>
+        <div class="pie-row">
+          <svg id="pie" viewBox="0 0 42 42" role="img" aria-label="Average completion">
+            <circle class="pie-bg" cx="21" cy="21" r="15.9155" />
+            <circle class="pie-fg" id="pie-fg" cx="21" cy="21" r="15.9155" stroke-dasharray="0 100" />
+            <text x="21" y="22.5" text-anchor="middle" id="pie-label">0%</text>
+          </svg>
+          <ul class="pie-key">
+            <li><span class="dot done"></span><b id="pie-done">0%</b> done</li>
+            <li><span class="dot not"></span><b id="pie-not">0%</b> not done</li>
+          </ul>
+        </div>
+        <p class="note">Average of your daily completion across every day with at least one task.</p>
+      </div>
+    </section>
+
+    <section class="work">
+      <div class="day">
+        <div class="day-head">
+          <h2 id="day-title">Today</h2>
+          <button type="button" id="btn-today" class="link" hidden>Back to today</button>
+        </div>
+        <p class="day-sub" id="day-sub"></p>
+        <ul class="tasks" id="tasks"></ul>
+        <p class="empty" id="empty" hidden>No tasks yet. Add your first one on the right.</p>
+      </div>
+
+      <form class="add" id="add-form" autocomplete="off">
+        <h2>Add a task</h2>
+        <label for="t-title">Title</label>
+        <input id="t-title" maxlength="120" required placeholder="e.g. Read for 20 minutes">
+        <label for="t-desc">Description</label>
+        <textarea id="t-desc" rows="4" placeholder="What counts as done?"></textarea>
+        <p class="error" id="form-error" role="alert" hidden></p>
+        <button type="submit">Add task</button>
+        <p class="note">New tasks count from today onward.</p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
