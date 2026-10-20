@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Progress tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/eel.js"></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Themis</h1>
+      <p class="sync" id="sync" data-state="offline"><span class="sync-dot" aria-hidden="true"></span><span id="sync-label">Offline</span></p>
+    </div>
+    <dl class="figures">
+      <div><dt>Current streak</dt><dd id="stat-streak">0 days</dd></div>
+      <div><dt>Perfect days</dt><dd id="stat-perfect">0</dd></div>
+      <div><dt>Days tracked</dt><dd id="stat-tracked">0</dd></div>
+    </dl>
+  </header>
+
+  <main>
+    <section class="overview" aria-labelledby="h-consistency">
+      <div class="consistency">
+        <h2 id="h-consistency">Daily consistency</h2>
+        <div class="heat-scroll">
+          <div class="months" id="months" aria-hidden="true"></div>
+          <div class="heat-wrap">
+            <div class="weekdays" aria-hidden="true"><span>Mon</span><span>Wed</span><span>Fri</span></div>
+            <div class="heat" id="heat" role="grid" aria-label="Completion by day"></div>
+          </div>
+        </div>
+        <div class="legend" aria-label="Colour key">
+          <span class="swatch missed"></span>Missed
+          <span class="swatch l1"></span><span class="swatch l2"></span><span class="swatch l3"></span><span class="swatch l4"></span>All done
+        </div>
+      </div>
+
+      <div class="pie-block">
+        <h2>Average day</h2>
+        <div class="pie-row">
+          <svg id="pie" viewBox="0 0 42 42" role="img" aria-label="Average completion">
+            <circle class="pie-bg" cx="21" cy="21" r="15.9155" />
+            <circle class="pie-fg" id="pie-fg" cx="21" cy="21" r="15.9155" stroke-dasharray="0 100" />
+            <text x="21" y="22.5" text-anchor="middle" id="pie-label">0%</text>
+          </svg>
+          <ul class="pie-key">
+            <li><span class="dot done"></span><b id="pie-done">0%</b> done</li>
+            <li><span class="dot not"></span><b id="pie-not">0%</b> not done</li>
+          </ul>
+        </div>
+        <p class="note">Average of your daily completion across every day with at least one task.</p>
+      </div>
+    </section>
+
+    <section class="work">
+      <div class="day">
+        <div class="day-head">
+          <h2 id="day-title">Today</h2>
+          <button type="button" id="btn-today" class="link" hidden>Back to today</button>
+        </div>
+        <p class="day-sub" id="day-sub"></p>
+        <ul class="tasks" id="tasks"></ul>
+        <p class="empty" id="empty" hidden>No tasks yet. Add your first one on the right.</p>
+      </div>
+
+      <form class="add" id="add-form" autocomplete="off">
+        <h2>Add a task</h2>
+        <label for="t-title">Title</label>
+        <input id="t-title" maxlength="120" required placeholder="e.g. Read for 20 minutes">
+        <label for="t-desc">Description</label>
+        <textarea id="t-desc" rows="4" placeholder="What counts as done?"></textarea>
+        <p class="error" id="form-error" role="alert" hidden></p>
+        <button type="submit">Add task</button>
+        <p class="note">New tasks count from today onward.</p>
+        <figure class="quote" id="quote" hidden>
+          <blockquote id="quote-text"></blockquote>
+          <figcaption id="quote-author"></figcaption>
+        </figure>
+      </form>
+    </section>
+
+    <section class="work oneoff" aria-labelledby="h-oneoff">
+      <div class="day">
+        <div class="day-head"><h2 id="h-oneoff">One-off tasks</h2></div>
+        <p class="day-sub">Do it once, tick it, and it's done for good. These never touch your heatmap, streak or averages.</p>
+        <ul class="tasks" id="oneoff-open"></ul>
+        <p class="empty" id="oneoff-empty" hidden>Nothing pending. Add a one-off task on the right.</p>
+        <details id="oneoff-done-wrap" hidden>
+          <summary>Completed (<span id="oneoff-done-count">0</span>)</summary>
+          <ul class="tasks" id="oneoff-done"></ul>
+        </details>
+      </div>
+
+      <form class="add" id="oneoff-form" autocomplete="off">
+        <h2>Add a one-off task</h2>
+        <label for="o-title">Title</label>
+        <input id="o-title" maxlength="120" required placeholder="e.g. Renew passport">
+        <label for="o-desc">Description</label>
+        <textarea id="o-desc" rows="3" placeholder="Any details (optional)"></textarea>
+        <p class="error" id="o-error" role="alert" hidden></p>
+        <button type="submit">Add one-off task</button>
+        <p class="note">Appears only in this list, not in your daily checklist.</p>
+      </form>
+    </section>
+
+    <section class="weight" aria-labelledby="h-weight">
+      <div class="weight-head">
+        <h2 id="h-weight">Weight &middot; past 6 months</h2>
+        <dl class="w-figs">
+          <div><dt>Latest</dt><dd id="w-latest">–</dd></div>
+          <div><dt>6-month change</dt><dd id="w-change">–</dd></div>
+          <div><dt>Lowest</dt><dd id="w-low">–</dd></div>
+          <div><dt>Highest</dt><dd id="w-high">–</dd></div>
+        </dl>
+      </div>
+      <div class="weight-body">
+        <div class="chart-box"><svg id="w-chart" viewBox="0 0 720 260" role="img" aria-label="Weight over the past 6 months"></svg></div>
+        <form class="w-form" id="w-form" autocomplete="off">
+          <label for="w-date">Date</label>
+          <input id="w-date" type="date" required>
+          <label for="w-val">Weight</label>
+          <div class="w-row">
+            <input id="w-val" type="number" step="0.1" min="1" inputmode="decimal" required placeholder="e.g. 72.5">
+            <select id="w-unit" aria-label="Unit"><option value="kg">kg</option><option value="lb">lb</option></select>
+          </div>
+          <p class="error" id="w-error" role="alert" hidden></p>
+          <div class="w-actions">
+            <button type="submit" class="primary">Save weight</button>
+            <button type="button" id="w-remove" class="link" hidden>Remove entry</button>
+          </div>
+          <p class="note">One entry per day. Saving again on the same date replaces it.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,54 @@
+com.themis.mobile.app-lifecycle-runtime-release-0 C:\Users\adr\.gradle\caches\8.9\transforms\0771ca4b04f4f1b6b2271917c3788ee6\transformed\lifecycle-runtime-release\res
+com.themis.mobile.app-ui-util-release-1 C:\Users\adr\.gradle\caches\8.9\transforms\092a3331a0f76ca3cd2cfe39ab226b92\transformed\ui-util-release\res
+com.themis.mobile.app-room-ktx-2.6.1-2 C:\Users\adr\.gradle\caches\8.9\transforms\0974bad7e4ec53cc16ece42f1279dc66\transformed\room-ktx-2.6.1\res
+com.themis.mobile.app-sqlite-2.4.0-3 C:\Users\adr\.gradle\caches\8.9\transforms\0a618cf0da9c65a470c48616a695ffef\transformed\sqlite-2.4.0\res
+com.themis.mobile.app-startup-runtime-1.1.1-4 C:\Users\adr\.gradle\caches\8.9\transforms\0cc66c67568fc8208e6c6438ce99b52d\transformed\startup-runtime-1.1.1\res
+com.themis.mobile.app-ui-release-5 C:\Users\adr\.gradle\caches\8.9\transforms\12e96298e071992dd3e9169a95ce839d\transformed\ui-release\res
+com.themis.mobile.app-lifecycle-viewmodel-savedstate-2.8.6-6 C:\Users\adr\.gradle\caches\8.9\transforms\1516653902ae2dcaae2a389fe3570942\transformed\lifecycle-viewmodel-savedstate-2.8.6\res
+com.themis.mobile.app-material3-release-7 C:\Users\adr\.gradle\caches\8.9\transforms\1bace66b06abb7770f4a5b1bee0c5c26\transformed\material3-release\res
+com.themis.mobile.app-annotation-experimental-1.4.1-8 C:\Users\adr\.gradle\caches\8.9\transforms\1f0113c3f257074fca4ad9225891e5cd\transformed\annotation-experimental-1.4.1\res
+com.themis.mobile.app-lifecycle-viewmodel-ktx-2.8.6-9 C:\Users\adr\.gradle\caches\8.9\transforms\24f54ccb778748255fe9175461b6eed0\transformed\lifecycle-viewmodel-ktx-2.8.6\res
+com.themis.mobile.app-animation-release-10 C:\Users\adr\.gradle\caches\8.9\transforms\256b91eccca613d75391e3f18ea96ff5\transformed\animation-release\res
+com.themis.mobile.app-core-ktx-1.13.1-11 C:\Users\adr\.gradle\caches\8.9\transforms\3d8bb332bae36c94b6693d24e7bd45ad\transformed\core-ktx-1.13.1\res
+com.themis.mobile.app-graphics-path-1.0.1-12 C:\Users\adr\.gradle\caches\8.9\transforms\3d8eb4c1279530cc5ace248940fa9530\transformed\graphics-path-1.0.1\res
+com.themis.mobile.app-lifecycle-livedata-core-2.8.6-13 C:\Users\adr\.gradle\caches\8.9\transforms\42aedca697d297e38332e08eb4a5e819\transformed\lifecycle-livedata-core-2.8.6\res
+com.themis.mobile.app-lifecycle-runtime-compose-release-14 C:\Users\adr\.gradle\caches\8.9\transforms\443c54e320cd1d16ec0a16d441df44c3\transformed\lifecycle-runtime-compose-release\res
+com.themis.mobile.app-emoji2-1.3.0-15 C:\Users\adr\.gradle\caches\8.9\transforms\48bdd22356474d27a6091494c7904d88\transformed\emoji2-1.3.0\res
+com.themis.mobile.app-foundation-release-16 C:\Users\adr\.gradle\caches\8.9\transforms\4df88b3d4eae47b4e0ec319c1d2baf13\transformed\foundation-release\res
+com.themis.mobile.app-lifecycle-service-2.8.6-17 C:\Users\adr\.gradle\caches\8.9\transforms\52335cafa7e6a9badc4a7f3bf3b45c44\transformed\lifecycle-service-2.8.6\res
+com.themis.mobile.app-profileinstaller-1.3.1-18 C:\Users\adr\.gradle\caches\8.9\transforms\5502365f1971825626f4785525760d38\transformed\profileinstaller-1.3.1\res
+com.themis.mobile.app-sqlite-framework-2.4.0-19 C:\Users\adr\.gradle\caches\8.9\transforms\58bc69f4d9c988a9ae9ec289b5126808\transformed\sqlite-framework-2.4.0\res
+com.themis.mobile.app-runtime-release-20 C:\Users\adr\.gradle\caches\8.9\transforms\59ab3b07730f1924239ea595c46dd9d3\transformed\runtime-release\res
+com.themis.mobile.app-material-ripple-release-21 C:\Users\adr\.gradle\caches\8.9\transforms\5ab693326a5c57923e8f7a65a8f9913c\transformed\material-ripple-release\res
+com.themis.mobile.app-lifecycle-runtime-ktx-release-22 C:\Users\adr\.gradle\caches\8.9\transforms\647a26ee48fa81baed8635bcd43d41ed\transformed\lifecycle-runtime-ktx-release\res
+com.themis.mobile.app-work-runtime-ktx-2.9.1-23 C:\Users\adr\.gradle\caches\8.9\transforms\67867f1623bc44938c0b6fe999be1be8\transformed\work-runtime-ktx-2.9.1\res
+com.themis.mobile.app-lifecycle-livedata-core-ktx-2.8.6-24 C:\Users\adr\.gradle\caches\8.9\transforms\6d9f6ea565cbf5518f6b2c51d2c4ab96\transformed\lifecycle-livedata-core-ktx-2.8.6\res
+com.themis.mobile.app-foundation-layout-release-25 C:\Users\adr\.gradle\caches\8.9\transforms\79ce82a93b7e07a80740022f4abed568\transformed\foundation-layout-release\res
+com.themis.mobile.app-ui-graphics-release-26 C:\Users\adr\.gradle\caches\8.9\transforms\842cf704aa8c20e1e46299765d0fbe82\transformed\ui-graphics-release\res
+com.themis.mobile.app-ui-unit-release-27 C:\Users\adr\.gradle\caches\8.9\transforms\95db396a2566e9ceed8dff3a73bb70d5\transformed\ui-unit-release\res
+com.themis.mobile.app-work-runtime-2.9.1-28 C:\Users\adr\.gradle\caches\8.9\transforms\9814cf3ef7825323aaa222937929cfb5\transformed\work-runtime-2.9.1\res
+com.themis.mobile.app-lifecycle-process-2.8.6-29 C:\Users\adr\.gradle\caches\8.9\transforms\9bc644f0dec8fa9edd6a6052665987b8\transformed\lifecycle-process-2.8.6\res
+com.themis.mobile.app-lifecycle-livedata-2.8.6-30 C:\Users\adr\.gradle\caches\8.9\transforms\a055e725e80b96a6dc9349a6394d6eda\transformed\lifecycle-livedata-2.8.6\res
+com.themis.mobile.app-activity-compose-1.9.2-31 C:\Users\adr\.gradle\caches\8.9\transforms\a11379bbdcc48c488e060a21db64b153\transformed\activity-compose-1.9.2\res
+com.themis.mobile.app-ui-text-release-32 C:\Users\adr\.gradle\caches\8.9\transforms\a680d9fbb341c66ca5f660c743e02ccf\transformed\ui-text-release\res
+com.themis.mobile.app-animation-core-release-33 C:\Users\adr\.gradle\caches\8.9\transforms\aa4e5d04be3142759414602eeb4cbcd7\transformed\animation-core-release\res
+com.themis.mobile.app-savedstate-ktx-1.2.1-34 C:\Users\adr\.gradle\caches\8.9\transforms\b1fdd0fe2070039d80954452205c5770\transformed\savedstate-ktx-1.2.1\res
+com.themis.mobile.app-core-1.13.1-35 C:\Users\adr\.gradle\caches\8.9\transforms\b25bb1e9ac97f1c1ac6c4059c8926107\transformed\core-1.13.1\res
+com.themis.mobile.app-ui-geometry-release-36 C:\Users\adr\.gradle\caches\8.9\transforms\b57d0db8db161ecb173b953ce6439e39\transformed\ui-geometry-release\res
+com.themis.mobile.app-lifecycle-viewmodel-release-37 C:\Users\adr\.gradle\caches\8.9\transforms\beff348431835fd1a479adef11241ef1\transformed\lifecycle-viewmodel-release\res
+com.themis.mobile.app-lifecycle-viewmodel-compose-release-38 C:\Users\adr\.gradle\caches\8.9\transforms\bfdb749587cd204a3505aa2d1d4196d0\transformed\lifecycle-viewmodel-compose-release\res
+com.themis.mobile.app-material-icons-core-release-39 C:\Users\adr\.gradle\caches\8.9\transforms\c487150d41db0c2de098352715b5b295\transformed\material-icons-core-release\res
+com.themis.mobile.app-savedstate-1.2.1-40 C:\Users\adr\.gradle\caches\8.9\transforms\c7daf36ef022970ffc49a7ddcb1aa039\transformed\savedstate-1.2.1\res
+com.themis.mobile.app-room-runtime-2.6.1-41 C:\Users\adr\.gradle\caches\8.9\transforms\cc49433638e1fd97a3347c711af11bae\transformed\room-runtime-2.6.1\res
+com.themis.mobile.app-core-runtime-2.2.0-42 C:\Users\adr\.gradle\caches\8.9\transforms\cd30f92c91068907e76eb1cc74f781d7\transformed\core-runtime-2.2.0\res
+com.themis.mobile.app-activity-ktx-1.9.2-43 C:\Users\adr\.gradle\caches\8.9\transforms\cdd43c8b81348ac3a57bac4c8b3cab44\transformed\activity-ktx-1.9.2\res
+com.themis.mobile.app-activity-1.9.2-44 C:\Users\adr\.gradle\caches\8.9\transforms\d1473fbb90afbbb0ee38e04a9b03d013\transformed\activity-1.9.2\res
+com.themis.mobile.app-customview-poolingcontainer-1.0.0-45 C:\Users\adr\.gradle\caches\8.9\transforms\d1ec15b0ecd4ca7a6e9d1897d1008219\transformed\customview-poolingcontainer-1.0.0\res
+com.themis.mobile.app-runtime-saveable-release-46 C:\Users\adr\.gradle\caches\8.9\transforms\e360d368355c7efc05bd3e8cb0fdab17\transformed\runtime-saveable-release\res
+com.themis.mobile.app-pngs-47 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\generated\res\pngs\debug
+com.themis.mobile.app-resValues-48 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\generated\res\resValues\debug
+com.themis.mobile.app-packageDebugResources-49 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.themis.mobile.app-packageDebugResources-50 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.themis.mobile.app-debug-51 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.themis.mobile.app-debug-52 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\src\debug\res
+com.themis.mobile.app-main-53 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\src\main\res
