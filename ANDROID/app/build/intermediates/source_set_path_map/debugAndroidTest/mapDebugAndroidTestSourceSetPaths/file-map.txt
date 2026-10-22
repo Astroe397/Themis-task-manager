@@ -1,4 +1,4 @@
-com.themis.mobile.test.app-androidTest-0 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\generated\res\resValues\androidTest\debug
-com.themis.mobile.test.app-mergeDebugAndroidTestResources-1 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-com.themis.mobile.test.app-mergeDebugAndroidTestResources-2 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-com.themis.mobile.test.app-debugAndroidTest-3 C:\Users\adr\Desktop\New folder (9)\ANDROID\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
+com.themis.mobile.test.app-androidTest-0 C:\Users\adr\Desktop\themis-mobileMap\new\app\build\generated\res\resValues\androidTest\debug
+com.themis.mobile.test.app-mergeDebugAndroidTestResources-1 C:\Users\adr\Desktop\themis-mobileMap\new\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.themis.mobile.test.app-mergeDebugAndroidTestResources-2 C:\Users\adr\Desktop\themis-mobileMap\new\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.themis.mobile.test.app-debugAndroidTest-3 C:\Users\adr\Desktop\themis-mobileMap\new\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

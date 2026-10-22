@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.themis.mobile.app-mergeDebugResources-49:/values-v30/values-v30.xml",
+            "outputFile": "com.themis.mobile.app-mergeDebugResources-54:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\adr\\.gradle\\caches\\8.9\\transforms\\1bace66b06abb7770f4a5b1bee0c5c26\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
+                    "source": "C:\\Users\\adr\\.gradle\\caches\\8.9\\transforms\\da58fe510ea632e33576cd877cf949d6\\transformed\\material3-release\\res\\values-v30\\values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

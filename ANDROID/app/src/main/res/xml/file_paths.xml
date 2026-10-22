@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Shared workout images live only in the app's cache and are exposed through FileProvider. -->
+    <cache-path name="shared_images" path="shared_images/" />
+</paths>

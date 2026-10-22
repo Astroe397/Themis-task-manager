@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#EFF3F4</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
     <style name="Theme.Themis" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">#E8EDF0</item>
     </style>

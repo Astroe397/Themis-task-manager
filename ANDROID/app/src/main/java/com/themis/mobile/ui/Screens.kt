@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -39,8 +40,27 @@ import java.time.format.FormatStyle
 private val fullDate: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL)
 private val weekday: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE")
 
+/**
+ * Top level: while a workout summary is open (after Done, or from the history) it takes over the screen,
+ * with the share preview one step further in. Back always goes one step out.
+ */
 @Composable
-fun ThemisRoot(vm: ThemisViewModel) {
+fun ThemisRoot(vm: ThemisViewModel, trackVm: TrackingViewModel) {
+    val summary by trackVm.summary.collectAsState()
+    var sharing by rememberSaveable { mutableStateOf(false) }
+    val s = summary
+    if (s == null) {
+        MainScaffold(vm, trackVm)
+    } else {
+        val close = { sharing = false; trackVm.closeSummary() }
+        BackHandler { if (sharing) sharing = false else close() }
+        if (sharing) SocialSharePreviewScreen(s) { sharing = false }
+        else WorkoutSummaryScreen(s, onBack = close, onShare = { sharing = true })
+    }
+}
+
+@Composable
+private fun MainScaffold(vm: ThemisViewModel, trackVm: TrackingViewModel) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var showAdd by remember { mutableStateOf(false) }
     var taskMode by rememberSaveable { mutableIntStateOf(0) }   // 0 = daily, 1 = one-off
@@ -66,7 +86,10 @@ fun ThemisRoot(vm: ThemisViewModel) {
         },
         bottomBar = {
             NavigationBar(containerColor = Surface) {
-                listOf("Dashboard" to Icons.Default.Home, "Tasks" to Icons.Default.Check, "Weight" to Icons.Default.Person)
+                listOf(
+                    "Dashboard" to Icons.Default.Home, "Tasks" to Icons.Default.Check,
+                    "Weight" to Icons.Default.Person, "Activity" to Icons.Default.LocationOn
+                )
                     .forEachIndexed { i, (name, icon) ->
                         NavigationBarItem(selected = tab == i, onClick = { tab = i },
                             icon = { Icon(icon, null) }, label = { Text(name) })
@@ -74,7 +97,7 @@ fun ThemisRoot(vm: ThemisViewModel) {
             }
         },
         floatingActionButton = {
-            if (tab == 1) FloatingActionButton(onClick = { showAdd = true }, containerColor = Accent, contentColor = Color.White) {
+            if (tab == 1) FloatingActionButton(onClick = { showAdd = true }, containerColor = Accent, contentColor = MaterialTheme.colorScheme.onPrimary) {
                 Icon(Icons.Default.Add, "Add task")
             }
         }
@@ -83,7 +106,8 @@ fun ThemisRoot(vm: ThemisViewModel) {
             when (tab) {
                 0 -> DashboardScreen(vm) { day -> vm.selectDay(day); tab = 1 }
                 1 -> TasksScreen(vm, taskMode) { taskMode = it }
-                else -> WeightScreen(vm)
+                2 -> WeightScreen(vm)
+                else -> ActivityScreen(trackVm)
             }
         }
     }
@@ -129,6 +153,7 @@ fun DashboardScreen(vm: ThemisViewModel, onPickDay: (LocalDate) -> Unit) {
     val stats by vm.stats.collectAsState()
     val selected by vm.selectedDay.collectAsState()
     val quote by vm.quote.collectAsState()
+    val ctx = LocalContext.current
     val s = stats ?: return
     Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.fillMaxWidth()) {
@@ -161,7 +186,10 @@ fun DashboardScreen(vm: ThemisViewModel, onPickDay: (LocalDate) -> Unit) {
                 Text(it.author, color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
             }
         }
-        Spacer(Modifier.height(8.dp))
+        // Very bottom of the dashboard: light/dark switch.
+        OutlinedButton(onClick = { ThemeMode.set(ctx, !ThemeMode.dark) }, Modifier.fillMaxWidth()) {
+            Text(if (ThemeMode.dark) "Disable dark theme" else "Enable dark theme")
+        }
     }
 }
 

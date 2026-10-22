@@ -21,9 +21,17 @@ Tasks screen -> **One-off** chip. Tick once and it's done for good; they never a
 They sync with the desktop's "One-off tasks" section. Existing phone data is kept (Room migration v1 -> v2).
 
 ## Water reminders (Android only)
-Every 30 minutes: "Time to drink water" plus a ZenQuotes quote (water-only text if offline).
-- Bell icon in the top bar turns it on/off. Android 13+ asks for notification permission on first launch.
-- Quiet hours 22:00-07:00: edit `QUIET_START_HOUR` / `QUIET_END_HOUR` in `reminder/WaterReminder.kt`
-  (set them equal for 24/7).
-- Delivery uses WorkManager, so Android may delay a reminder by a few minutes (Doze, battery saver).
-  For tighter timing: Settings -> Apps -> Themis -> Battery -> Unrestricted.
+Every 30 minutes (:00 and :30): "Time to drink water" plus a ZenQuotes quote (water-only text if offline).
+- Runs on AlarmManager, so it works with the app closed; BootReceiver re-arms it after a reboot/update.
+- **No reminders 23:00-09:00** (`QUIET_START_HOUR` / `QUIET_END_HOUR` in `reminder/WaterReminder.kt`).
+- Bell in the top bar toggles it. Android 13+ asks for notification permission on first launch.
+- Exact timing needs "Alarms & reminders" (Settings -> Apps -> Themis); otherwise an inexact alarm is used.
+
+## Activity tracking
+Activity tab: live map, distance, time, pace, steps, history. See the root README for the architecture.
+Test on a real phone outdoors; walk a loop, lock the screen, and check the route survives. To test process
+death: start a workout, then `adb shell am kill com.themis.mobile` and reopen the app.
+
+## Sharing a workout
+Finish an activity -> summary screen -> share icon -> 9:16 preview -> "Share to Instagram Story" or "Save / Share".
+Test the Instagram path on a phone with Instagram installed, and the fallback on one without it (or an emulator).

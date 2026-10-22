@@ -41,14 +41,19 @@ import kotlinx.coroutines.flow.Flow
 }
 
 @Database(
-    entities = [TaskEntity::class, CompletionEntity::class, WeightEntity::class, SettingEntity::class],
-    version = 2, exportSchema = false
+    entities = [
+        TaskEntity::class, CompletionEntity::class, WeightEntity::class, SettingEntity::class,
+        ActivityEntity::class, TrackPointEntity::class
+    ],
+    version = 3, exportSchema = false
 )
 abstract class ThemisDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun completionDao(): CompletionDao
     abstract fun weightDao(): WeightDao
     abstract fun settingDao(): SettingDao
+    abstract fun activityDao(): ActivityDao
+    abstract fun trackPointDao(): TrackPointDao
 }
 
 /** v1 -> v2: one-off tasks. Existing rows become ordinary daily tasks. */
@@ -56,5 +61,26 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE tasks ADD COLUMN isOneOff INTEGER NOT NULL DEFAULT 0")
         db.execSQL("ALTER TABLE tasks ADD COLUMN isDone INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+/** v2 -> v3: activity tracking tables. Existing data is untouched. */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `activities` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`startedAt` INTEGER NOT NULL, `endedAt` INTEGER, `status` TEXT NOT NULL, " +
+                "`distanceMeters` REAL NOT NULL, `elapsedMs` INTEGER NOT NULL, `movingTimeMs` INTEGER NOT NULL, " +
+                "`steps` INTEGER NOT NULL, `baselineSteps` INTEGER NOT NULL, `stepOffset` INTEGER NOT NULL, " +
+                "`lastHardwareSteps` INTEGER NOT NULL)"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `track_points` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`activityId` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, " +
+                "`altitude` REAL NOT NULL, `speed` REAL NOT NULL, `accuracy` REAL NOT NULL, " +
+                "`timestamp` INTEGER NOT NULL, FOREIGN KEY(`activityId`) REFERENCES `activities`(`id`) " +
+                "ON UPDATE NO ACTION ON DELETE CASCADE)"
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_points_activityId` ON `track_points` (`activityId`)")
     }
 }
