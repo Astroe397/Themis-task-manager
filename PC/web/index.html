@@ -21,7 +21,14 @@
     </dl>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="tab-habits" aria-controls="panel-habits" aria-selected="true">Habits</button>
+    <button type="button" role="tab" id="tab-strength" aria-controls="panel-strength" aria-selected="false" tabindex="-1">Strength</button>
+    <button type="button" role="tab" id="tab-activity" aria-controls="panel-activity" aria-selected="false" tabindex="-1">Activity</button>
+  </nav>
+
   <main>
+    <div id="panel-habits" role="tabpanel" aria-labelledby="tab-habits">
     <section class="overview" aria-labelledby="h-consistency">
       <div class="consistency">
         <h2 id="h-consistency">Daily consistency</h2>
@@ -135,6 +142,92 @@
         </form>
       </div>
     </section>
+    </div>
+
+    <div id="panel-strength" role="tabpanel" aria-labelledby="tab-strength" hidden>
+      <section class="panel-head">
+        <div>
+          <h2>Muscle strength</h2>
+          <p class="day-sub">Each rank comes from your best estimated 1RM per muscle group over the last <span id="s-window">30</span> days.</p>
+        </div>
+        <button type="button" id="s-open" class="primary">Log a lift</button>
+      </section>
+      <p class="banner" id="s-result" role="status" hidden></p>
+      <div class="groups" id="s-groups"></div>
+
+      <section class="ladder-box" aria-labelledby="s-ladder-title">
+        <div class="ladder-head">
+          <h2 id="s-ladder-title">Tier ladder</h2>
+          <span class="note" id="s-ladder-sub"></span>
+        </div>
+        <ol class="ladder" id="s-ladder"></ol>
+        <p class="note">Thresholds are on the bench-press scale; each lift is adjusted by its own baseline, so a squat needs a heavier 1RM than a curl.</p>
+      </section>
+
+      <section class="recent" aria-labelledby="s-recent-title">
+        <h2 id="s-recent-title">Recent sets</h2>
+        <div class="tbl-wrap">
+          <table class="tbl" id="s-recent">
+            <thead><tr><th>When</th><th>Exercise</th><th class="num">Weight</th><th class="num">Reps</th><th class="num">Est. 1RM</th><th><span class="sr">Actions</span></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="s-recent-empty" hidden>No sets yet. Log one here, or on your phone.</p>
+      </section>
+    </div>
+
+    <div id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
+      <section aria-labelledby="h-activity">
+        <h2 id="h-activity">Activity recordings</h2>
+        <p class="day-sub">GPS workouts recorded on your phone arrive here when it syncs.</p>
+        <dl class="cards" id="a-summary">
+          <div><dt>Workouts</dt><dd id="a-count">0</dd></div>
+          <div><dt>Distance</dt><dd id="a-dist">0 km</dd></div>
+          <div><dt>Active time</dt><dd id="a-time">0m</dd></div>
+          <div><dt>Steps</dt><dd id="a-steps">0</dd></div>
+        </dl>
+        <div class="tbl-wrap">
+          <table class="tbl" id="a-table">
+            <thead><tr><th>When</th><th>Type</th><th class="num">Distance</th><th class="num">Time</th><th class="num">Pace</th><th class="num">Steps</th><th>Route</th><th><span class="sr">Actions</span></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="a-empty" hidden>No recorded activities yet.</p>
+      </section>
+
+      <section class="resets" aria-labelledby="h-resets">
+        <h2 id="h-resets">10-minute resets</h2>
+        <p class="day-sub" id="m-sub">0 sessions &middot; 0m 00s total</p>
+        <div class="tbl-wrap">
+          <table class="tbl" id="m-table">
+            <thead><tr><th>When</th><th class="num">Duration</th><th>Sound &amp; pattern</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="m-empty" hidden>No reset sessions yet.</p>
+      </section>
+    </div>
   </main>
+
+  <dialog id="s-dialog" aria-labelledby="s-dialog-title">
+    <form id="s-form" autocomplete="off">
+      <h2 id="s-dialog-title">Log a lift</h2>
+      <label for="s-ex">Exercise</label>
+      <select id="s-ex"></select>
+      <label for="s-w" id="s-w-label">Weight per rep</label>
+      <input id="s-w" type="number" step="0.5" min="0" inputmode="decimal" required>
+      <p class="note" id="s-bw-note" hidden></p>
+      <div class="two">
+        <div><label for="s-reps">Reps</label><input id="s-reps" type="number" step="1" min="1" max="30" value="5" required></div>
+        <div><label for="s-sets">Sets</label><input id="s-sets" type="number" step="1" min="1" max="20" value="1" required></div>
+      </div>
+      <p class="preview" id="s-preview" aria-live="polite"></p>
+      <p class="error" id="s-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="submit" class="primary">Log it</button>
+        <button type="button" class="link" id="s-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

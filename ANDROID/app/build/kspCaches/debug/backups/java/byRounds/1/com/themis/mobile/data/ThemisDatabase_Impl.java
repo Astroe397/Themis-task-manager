@@ -35,14 +35,10 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
 
   private volatile SettingDao _settingDao;
 
-  private volatile ActivityDao _activityDao;
-
-  private volatile TrackPointDao _trackPointDao;
-
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uid` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `createdAt` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `isDeleted` INTEGER NOT NULL, `isOneOff` INTEGER NOT NULL DEFAULT 0, `isDone` INTEGER NOT NULL DEFAULT 0)");
@@ -50,11 +46,8 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
         db.execSQL("CREATE TABLE IF NOT EXISTS `completions` (`taskId` INTEGER NOT NULL, `day` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, `isDeleted` INTEGER NOT NULL, PRIMARY KEY(`taskId`, `day`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `weights` (`day` TEXT NOT NULL, `kg` REAL NOT NULL, `updatedAt` TEXT NOT NULL, `isDeleted` INTEGER NOT NULL, PRIMARY KEY(`day`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `settings` (`key` TEXT NOT NULL, `value` TEXT NOT NULL, `updatedAt` TEXT NOT NULL, PRIMARY KEY(`key`))");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `activities` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `startedAt` INTEGER NOT NULL, `endedAt` INTEGER, `status` TEXT NOT NULL, `distanceMeters` REAL NOT NULL, `elapsedMs` INTEGER NOT NULL, `movingTimeMs` INTEGER NOT NULL, `steps` INTEGER NOT NULL, `baselineSteps` INTEGER NOT NULL, `stepOffset` INTEGER NOT NULL, `lastHardwareSteps` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `track_points` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `activityId` INTEGER NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `altitude` REAL NOT NULL, `speed` REAL NOT NULL, `accuracy` REAL NOT NULL, `timestamp` INTEGER NOT NULL, FOREIGN KEY(`activityId`) REFERENCES `activities`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_track_points_activityId` ON `track_points` (`activityId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5b6a53daf9283ddc0ce06f18aac379a1')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b062804d56afe20bd068c53fd188b875')");
       }
 
       @Override
@@ -63,8 +56,6 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
         db.execSQL("DROP TABLE IF EXISTS `completions`");
         db.execSQL("DROP TABLE IF EXISTS `weights`");
         db.execSQL("DROP TABLE IF EXISTS `settings`");
-        db.execSQL("DROP TABLE IF EXISTS `activities`");
-        db.execSQL("DROP TABLE IF EXISTS `track_points`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -86,7 +77,6 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
       @Override
       public void onOpen(@NonNull final SupportSQLiteDatabase db) {
         mDatabase = db;
-        db.execSQL("PRAGMA foreign_keys = ON");
         internalInitInvalidationTracker(db);
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
@@ -170,50 +160,9 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
                   + " Expected:\n" + _infoSettings + "\n"
                   + " Found:\n" + _existingSettings);
         }
-        final HashMap<String, TableInfo.Column> _columnsActivities = new HashMap<String, TableInfo.Column>(11);
-        _columnsActivities.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("startedAt", new TableInfo.Column("startedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("endedAt", new TableInfo.Column("endedAt", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("status", new TableInfo.Column("status", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("distanceMeters", new TableInfo.Column("distanceMeters", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("elapsedMs", new TableInfo.Column("elapsedMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("movingTimeMs", new TableInfo.Column("movingTimeMs", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("steps", new TableInfo.Column("steps", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("baselineSteps", new TableInfo.Column("baselineSteps", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("stepOffset", new TableInfo.Column("stepOffset", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsActivities.put("lastHardwareSteps", new TableInfo.Column("lastHardwareSteps", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysActivities = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesActivities = new HashSet<TableInfo.Index>(0);
-        final TableInfo _infoActivities = new TableInfo("activities", _columnsActivities, _foreignKeysActivities, _indicesActivities);
-        final TableInfo _existingActivities = TableInfo.read(db, "activities");
-        if (!_infoActivities.equals(_existingActivities)) {
-          return new RoomOpenHelper.ValidationResult(false, "activities(com.themis.mobile.data.ActivityEntity).\n"
-                  + " Expected:\n" + _infoActivities + "\n"
-                  + " Found:\n" + _existingActivities);
-        }
-        final HashMap<String, TableInfo.Column> _columnsTrackPoints = new HashMap<String, TableInfo.Column>(8);
-        _columnsTrackPoints.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("activityId", new TableInfo.Column("activityId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("latitude", new TableInfo.Column("latitude", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("longitude", new TableInfo.Column("longitude", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("altitude", new TableInfo.Column("altitude", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("speed", new TableInfo.Column("speed", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("accuracy", new TableInfo.Column("accuracy", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsTrackPoints.put("timestamp", new TableInfo.Column("timestamp", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysTrackPoints = new HashSet<TableInfo.ForeignKey>(1);
-        _foreignKeysTrackPoints.add(new TableInfo.ForeignKey("activities", "CASCADE", "NO ACTION", Arrays.asList("activityId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesTrackPoints = new HashSet<TableInfo.Index>(1);
-        _indicesTrackPoints.add(new TableInfo.Index("index_track_points_activityId", false, Arrays.asList("activityId"), Arrays.asList("ASC")));
-        final TableInfo _infoTrackPoints = new TableInfo("track_points", _columnsTrackPoints, _foreignKeysTrackPoints, _indicesTrackPoints);
-        final TableInfo _existingTrackPoints = TableInfo.read(db, "track_points");
-        if (!_infoTrackPoints.equals(_existingTrackPoints)) {
-          return new RoomOpenHelper.ValidationResult(false, "track_points(com.themis.mobile.data.TrackPointEntity).\n"
-                  + " Expected:\n" + _infoTrackPoints + "\n"
-                  + " Found:\n" + _existingTrackPoints);
-        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "5b6a53daf9283ddc0ce06f18aac379a1", "6351bad44206357fc3b0882b2cc538f3");
+    }, "b062804d56afe20bd068c53fd188b875", "2ea2134e3ec1513a5588cf5a6c3c568a");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -224,34 +173,22 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "tasks","completions","weights","settings","activities","track_points");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "tasks","completions","weights","settings");
   }
 
   @Override
   public void clearAllTables() {
     super.assertNotMainThread();
     final SupportSQLiteDatabase _db = super.getOpenHelper().getWritableDatabase();
-    final boolean _supportsDeferForeignKeys = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP;
     try {
-      if (!_supportsDeferForeignKeys) {
-        _db.execSQL("PRAGMA foreign_keys = FALSE");
-      }
       super.beginTransaction();
-      if (_supportsDeferForeignKeys) {
-        _db.execSQL("PRAGMA defer_foreign_keys = TRUE");
-      }
       _db.execSQL("DELETE FROM `tasks`");
       _db.execSQL("DELETE FROM `completions`");
       _db.execSQL("DELETE FROM `weights`");
       _db.execSQL("DELETE FROM `settings`");
-      _db.execSQL("DELETE FROM `activities`");
-      _db.execSQL("DELETE FROM `track_points`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
-      if (!_supportsDeferForeignKeys) {
-        _db.execSQL("PRAGMA foreign_keys = TRUE");
-      }
       _db.query("PRAGMA wal_checkpoint(FULL)").close();
       if (!_db.inTransaction()) {
         _db.execSQL("VACUUM");
@@ -267,8 +204,6 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
     _typeConvertersMap.put(CompletionDao.class, CompletionDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(WeightDao.class, WeightDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(SettingDao.class, SettingDao_Impl.getRequiredConverters());
-    _typeConvertersMap.put(ActivityDao.class, ActivityDao_Impl.getRequiredConverters());
-    _typeConvertersMap.put(TrackPointDao.class, TrackPointDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -339,34 +274,6 @@ public final class ThemisDatabase_Impl extends ThemisDatabase {
           _settingDao = new SettingDao_Impl(this);
         }
         return _settingDao;
-      }
-    }
-  }
-
-  @Override
-  public ActivityDao activityDao() {
-    if (_activityDao != null) {
-      return _activityDao;
-    } else {
-      synchronized(this) {
-        if(_activityDao == null) {
-          _activityDao = new ActivityDao_Impl(this);
-        }
-        return _activityDao;
-      }
-    }
-  }
-
-  @Override
-  public TrackPointDao trackPointDao() {
-    if (_trackPointDao != null) {
-      return _trackPointDao;
-    } else {
-      synchronized(this) {
-        if(_trackPointDao == null) {
-          _trackPointDao = new TrackPointDao_Impl(this);
-        }
-        return _trackPointDao;
       }
     }
   }

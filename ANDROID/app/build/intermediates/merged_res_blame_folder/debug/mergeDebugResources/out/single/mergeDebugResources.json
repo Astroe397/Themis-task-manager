@@ -1,50 +1,34 @@
 [
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-xxxhdpi\\ic_launcher_foreground.png"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-anydpi_ic_launcher.xml.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-anydpi/ic_launcher.xml"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\drawable_ic_track.xml.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\drawable\\ic_track.xml"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-xhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-hdpi_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-hdpi\\ic_launcher_foreground.png"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-anydpi_ic_launcher_round.xml.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-anydpi/ic_launcher_round.xml"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-anydpi_ic_launcher.xml.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-anydpi\\ic_launcher.xml"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-mdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-anydpi_ic_launcher_round.xml.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-anydpi\\ic_launcher_round.xml"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-hdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\drawable-nodpi_logo_emblem.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\drawable-nodpi\\logo_emblem.png"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-xxhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-xhdpi_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-xhdpi\\ic_launcher_foreground.png"
+        "merged": "com.themis.mobile.app-debug-51:/mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.themis.mobile.app-main-53:/mipmap-xxxhdpi/ic_launcher_foreground.png"
     },
     {
-        "merged": "com.themis.mobile.app-debug-56:/drawable-nodpi_logo_emblem.png.flat",
-        "source": "com.themis.mobile.app-main-58:/drawable-nodpi/logo_emblem.png"
-    },
-    {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-xxhdpi_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-xxhdpi\\ic_launcher_foreground.png"
-    },
-    {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\mipmap-mdpi_ic_launcher_foreground.png.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\mipmap-mdpi\\ic_launcher_foreground.png"
-    },
-    {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\drawable_ic_water.xml.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\drawable\\ic_water.xml"
-    },
-    {
-        "merged": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-debug-56:\\xml_file_paths.xml.flat",
-        "source": "C:\\Users\\adr\\.gradle\\daemon\\8.9\\com.themis.mobile.app-main-58:\\xml\\file_paths.xml"
+        "merged": "com.themis.mobile.app-debug-51:/drawable_ic_water.xml.flat",
+        "source": "com.themis.mobile.app-main-53:/drawable/ic_water.xml"
     }
 ]

@@ -2,6 +2,7 @@
 import calendar
 import json
 import os
+import re
 import shutil
 import socket
 import sqlite3
@@ -17,16 +18,18 @@ import eel
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE, "progress.db")
-SCHEMA_VERSION = 4          # 1 = tasks + completions, 2 = + weights/settings, 3 = + sync columns, 4 = + one-off tasks
+SCHEMA_VERSION = 5          # 1 = tasks + completions, 2 = + weights/settings, 3 = + sync columns, 4 = + one-off tasks,
+                            # 5 = + strength sets, activities, meditation sessions
 KG_PER_LB = 0.45359237
 
 DISCOVERY_PORT = 54321      # UDP
 SYNC_PORT = 54322           # TCP
 PROTOCOL_VERSION = 1
 PING = b"THEMIS_DISCOVERY_PING"
-MAX_BODY = 5 * 1024 * 1024
+MAX_BODY = 25 * 1024 * 1024   # activity routes can be large
 SYNCED_WINDOW = 60          # seconds a sync counts as "just now"
 EPOCH = "1970-01-01T00:00:00Z"
+ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
 def now_iso():
@@ -109,6 +112,52 @@ def init_db():
                 key   TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+            -- v5. Rows below are keyed by UUID so phone and desktop never collide.
+            CREATE TABLE IF NOT EXISTS exercises (
+                id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                name                TEXT NOT NULL,
+                primary_group       TEXT NOT NULL,
+                uses_bodyweight     INTEGER NOT NULL DEFAULT 0,
+                baseline_multiplier REAL NOT NULL DEFAULT 1.0,
+                updated_at          TEXT NOT NULL DEFAULT '{EPOCH}',
+                is_deleted          INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS strength_sets (
+                id            TEXT PRIMARY KEY,
+                exercise_name TEXT NOT NULL,
+                primary_group TEXT NOT NULL,
+                weight_kg     REAL NOT NULL,
+                reps          INTEGER NOT NULL,
+                e1rm_kg       REAL NOT NULL,
+                timestamp     INTEGER NOT NULL,          -- epoch milliseconds
+                updated_at    TEXT NOT NULL DEFAULT '{EPOCH}',
+                is_deleted    INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS activities (
+                id               TEXT PRIMARY KEY,
+                type             TEXT NOT NULL,
+                start_time       INTEGER NOT NULL,       -- epoch milliseconds
+                end_time         INTEGER NOT NULL,
+                distance_meters  REAL NOT NULL DEFAULT 0.0,
+                duration_seconds INTEGER NOT NULL DEFAULT 0,
+                steps            INTEGER NOT NULL DEFAULT 0,
+                route_json       TEXT NOT NULL DEFAULT '[]',
+                updated_at       TEXT NOT NULL DEFAULT '{EPOCH}',
+                is_deleted       INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS meditation_sessions (
+                id               TEXT PRIMARY KEY,
+                timestamp        INTEGER NOT NULL,       -- epoch milliseconds
+                duration_seconds INTEGER NOT NULL,
+                sound_pattern    TEXT NOT NULL DEFAULT '',
+                updated_at       TEXT NOT NULL DEFAULT '{EPOCH}',
+                is_deleted       INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_name ON exercises(name);
+            CREATE INDEX IF NOT EXISTS idx_sets_updated  ON strength_sets(updated_at);
+            CREATE INDEX IF NOT EXISTS idx_sets_time     ON strength_sets(timestamp);
+            CREATE INDEX IF NOT EXISTS idx_act_updated   ON activities(updated_at);
+            CREATE INDEX IF NOT EXISTS idx_med_updated   ON meditation_sessions(updated_at);
             """
         )
         # v2 -> v3. SQLite can't ADD COLUMN with a non-constant default
@@ -125,6 +174,11 @@ def init_db():
         for r in c.execute("SELECT id FROM tasks WHERE uid IS NULL OR uid = ''").fetchall():
             c.execute("UPDATE tasks SET uid = ? WHERE id = ?", (str(uuid.uuid4()), r["id"]))
         c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_uid ON tasks(uid)")
+        # v4 -> v5: the exercise catalogue ships with the same defaults as the phone.
+        for name, group, mult, bw in DEFAULT_EXERCISES:
+            c.execute(
+                "INSERT OR IGNORE INTO exercises (name, primary_group, uses_bodyweight, baseline_multiplier, updated_at) "
+                "VALUES (?,?,?,?,?)", (name, group, bw, mult, stamp))
         if meta_get(c, "device_id") is None:
             meta_set(c, "device_id", str(uuid.uuid4()))
         c.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
@@ -403,6 +457,280 @@ def get_stats(weeks=26):
 
 
 # ======================================================================
+# Strength & ranks (ported from the mobile StrengthEngine)
+# ======================================================================
+RANK_WINDOW_DAYS = 30
+MUSCLE_GROUPS = [("CHEST", "Chest"), ("BACK", "Back"), ("LEGS", "Legs"),
+                 ("SHOULDERS", "Shoulders"), ("ARMS", "Arms"), ("CORE", "Core")]
+GROUP_KEYS = {k for k, _ in MUSCLE_GROUPS}
+# (label, colour, bench-press-scale 1RM in kg needed to reach it). Wood = anything below Bronze.
+TIERS = [("Wood", "#8B5A2B", 0.0), ("Bronze", "#CD7F32", 38.5), ("Silver", "#C0C0C0", 54.4),
+         ("Gold", "#FFD700", 65.8), ("Platinum", "#4ECCA3", 77.1), ("Diamond", "#9D94FF", 88.5),
+         ("Champion", "#D980FA", 102.1), ("Titan", "#FF4D4D", 115.7), ("Olympian", "#48DBFB", 129.3)]
+# (name, group, baseline multiplier vs bench press, uses body weight)
+DEFAULT_EXERCISES = [
+    ("Bench Press", "CHEST", 1.0, 0), ("Incline Bench Press", "CHEST", 0.85, 0),
+    ("Deadlift", "BACK", 1.5, 0), ("Barbell Row", "BACK", 0.9, 0), ("Lat Pulldown", "BACK", 0.85, 0),
+    ("Pull-Ups", "BACK", 1.0, 1),
+    ("Squat", "LEGS", 1.35, 0), ("Leg Press", "LEGS", 2.2, 0), ("Romanian Deadlift", "LEGS", 1.2, 0),
+    ("Overhead Press", "SHOULDERS", 0.7, 0), ("Lateral Raise", "SHOULDERS", 0.12, 0),
+    ("Barbell Curl", "ARMS", 0.45, 0), ("Triceps Pushdown", "ARMS", 0.55, 0),
+    ("Close-Grip Bench Press", "ARMS", 0.85, 0),
+    ("Cable Crunch", "CORE", 0.6, 0), ("Weighted Sit-Up", "CORE", 0.35, 0),
+]
+
+
+def epley(weight_kg, reps):
+    """Epley 1RM = w * (1 + reps/30). One rep is the weight itself; reps are capped at 30."""
+    return weight_kg if reps <= 1 else weight_kg * (1 + min(reps, 30) / 30.0)
+
+
+def _ms_ago(days):
+    return int((time.time() - days * 86400) * 1000)
+
+
+def _standing(normalized_kg):
+    idx = max(i for i, t in enumerate(TIERS) if normalized_kg >= t[2])
+    nxt = TIERS[idx + 1] if idx + 1 < len(TIERS) else None
+    progress = 1.0 if nxt is None else min(1.0, max(0.0, (normalized_kg - TIERS[idx][2]) / (nxt[2] - TIERS[idx][2])))
+    return {"tier": TIERS[idx][0], "level": idx + 1, "color": TIERS[idx][1],
+            "progress": round(progress, 4), "next": nxt[0] if nxt else None, "normalized_kg": normalized_kg}
+
+
+def _multipliers(c):
+    return {r["name"]: r["baseline_multiplier"] for r in c.execute("SELECT name, baseline_multiplier FROM exercises")}
+
+
+def _bodyweight_kg(c):
+    r = c.execute("SELECT kg FROM weights WHERE is_deleted = 0 ORDER BY day DESC LIMIT 1").fetchone()
+    return r["kg"] if r else None
+
+
+def _group_bests(c, mult):
+    """{group: {exercise, e1rm_kg, normalized_kg}} using each group's best exercise in the rolling window."""
+    rows = c.execute(
+        """SELECT exercise_name, primary_group, MAX(e1rm_kg) AS e1 FROM strength_sets
+           WHERE is_deleted = 0 AND timestamp >= ? GROUP BY exercise_name, primary_group""",
+        (_ms_ago(RANK_WINDOW_DAYS),),
+    ).fetchall()
+    best = {}
+    for r in rows:
+        norm = r["e1"] / (mult.get(r["exercise_name"]) or 1.0)
+        cur = best.get(r["primary_group"])
+        if cur is None or norm > cur["normalized_kg"]:
+            best[r["primary_group"]] = {"exercise": r["exercise_name"], "e1rm_kg": r["e1"], "normalized_kg": norm}
+    return best
+
+
+@eel.expose
+def get_exercises():
+    with db() as c:
+        rows = c.execute(
+            "SELECT name, primary_group, uses_bodyweight, baseline_multiplier FROM exercises "
+            "WHERE is_deleted = 0 ORDER BY id").fetchall()
+    return [{"name": r["name"], "group": r["primary_group"], "uses_bodyweight": bool(r["uses_bodyweight"]),
+             "multiplier": r["baseline_multiplier"]} for r in rows]
+
+
+@eel.expose
+def get_strength_ranks():
+    """Best 1RM per muscle group over the last 30 days, resolved to a tier."""
+    with db() as c:
+        unit = _unit(c)
+        bests = _group_bests(c, _multipliers(c))
+        bw = _bodyweight_kg(c)
+    groups = []
+    for key, label in MUSCLE_GROUPS:
+        b = bests.get(key)
+        if b is None:
+            groups.append({"group": key, "label": label, "ranked": False, "tier": "Unranked", "level": 0,
+                           "color": "#8a98a1", "progress": 0, "next": TIERS[0][0], "normalized": 0,
+                           "normalized_kg": 0, "best": None})
+            continue
+        s = _standing(b["normalized_kg"])
+        groups.append({"group": key, "label": label, "ranked": True, "tier": s["tier"], "level": s["level"],
+                       "color": s["color"], "progress": s["progress"], "next": s["next"],
+                       "normalized": _out(b["normalized_kg"], unit), "normalized_kg": b["normalized_kg"],
+                       "best": {"exercise": b["exercise"], "e1rm": _out(b["e1rm_kg"], unit)}})
+    return {
+        "unit": unit, "window_days": RANK_WINDOW_DAYS, "kg_per_lb": KG_PER_LB,
+        "bodyweight": _out(bw, unit) if bw else None, "bodyweight_kg": bw,
+        "groups": groups,
+        "tiers": [{"label": t[0], "color": t[1], "level": i + 1, "base": _out(t[2], unit), "base_kg": t[2]}
+                  for i, t in enumerate(TIERS)],
+    }
+
+
+def _public_standing(s, unit):
+    return None if s is None else {"tier": s["tier"], "level": s["level"], "color": s["color"],
+                                   "progress": s["progress"], "next": s["next"]}
+
+
+@eel.expose
+def log_strength_set(exercise_name, primary_group, weight_kg, reps, uses_bodyweight=False, sets=1):
+    """Log `sets` identical sets. weight_kg is the weight lifted (added weight for bodyweight lifts)."""
+    name = (exercise_name or "").strip()
+    try:
+        kg, reps, sets = float(weight_kg), int(reps), int(sets)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "Enter a valid weight, reps and sets."}
+    if not name:
+        return {"ok": False, "error": "Pick an exercise."}
+    if not 1 <= sets <= 20:
+        return {"ok": False, "error": "Sets must be between 1 and 20."}
+    if not 1 <= reps <= 30:
+        return {"ok": False, "error": "Reps must be between 1 and 30."}
+    if not 0 <= kg <= 1000:
+        return {"ok": False, "error": "That weight looks out of range."}
+
+    with db() as c:
+        ex = c.execute("SELECT * FROM exercises WHERE name = ? AND is_deleted = 0", (name,)).fetchone()
+        if ex:  # the catalogue is the source of truth for group and body-weight use
+            group, bodyweight_lift = ex["primary_group"], bool(ex["uses_bodyweight"])
+        else:
+            group, bodyweight_lift = str(primary_group or "").upper(), bool(uses_bodyweight)
+        if group not in GROUP_KEYS:
+            return {"ok": False, "error": "Unknown muscle group."}
+        if not bodyweight_lift and kg <= 0:
+            return {"ok": False, "error": "Enter a weight above 0."}
+        effective = kg + ((_bodyweight_kg(c) or 0.0) if bodyweight_lift else 0.0)
+        if effective <= 0:
+            return {"ok": False, "error": "Log your body weight first, or add weight."}
+        e1 = epley(effective, reps)
+
+        mult = _multipliers(c)
+        mult.setdefault(name, 1.0)
+        before_best = _group_bests(c, mult).get(group)
+        prev = c.execute(
+            "SELECT MAX(e1rm_kg) AS m FROM strength_sets WHERE exercise_name = ? AND is_deleted = 0 AND timestamp >= ?",
+            (name, _ms_ago(RANK_WINDOW_DAYS))).fetchone()["m"]
+        now_ms, stamp = int(time.time() * 1000), now_iso()
+        for i in range(sets):
+            c.execute(
+                """INSERT INTO strength_sets (id, exercise_name, primary_group, weight_kg, reps, e1rm_kg,
+                                              timestamp, updated_at, is_deleted)
+                   VALUES (?,?,?,?,?,?,?,?,0)""",
+                (str(uuid.uuid4()), name, group, kg, reps, e1, now_ms + i, stamp))
+        after_best = _group_bests(c, mult)[group]
+        unit = _unit(c)
+
+    before = _standing(before_best["normalized_kg"]) if before_best else None
+    after = _standing(after_best["normalized_kg"])
+    return {"ok": True, "exercise": name, "group": group,
+            "label": dict(MUSCLE_GROUPS)[group], "sets": sets, "reps": reps, "e1rm": _out(e1, unit), "unit": unit,
+            "before": _public_standing(before, unit), "after": _public_standing(after, unit),
+            "promoted": before is not None and after["level"] > before["level"],
+            "new_best": prev is None or e1 > prev}
+
+
+@eel.expose
+def delete_strength_set(set_id):
+    with db() as c:
+        c.execute("UPDATE strength_sets SET is_deleted = 1, updated_at = ? WHERE id = ?", (now_iso(), set_id))
+    return {"ok": True}
+
+
+@eel.expose
+def get_recent_sets(limit=20):
+    try:
+        limit = max(1, min(int(limit), 200))
+    except (TypeError, ValueError):
+        limit = 20
+    with db() as c:
+        unit = _unit(c)
+        rows = c.execute(
+            "SELECT * FROM strength_sets WHERE is_deleted = 0 ORDER BY timestamp DESC, id DESC LIMIT ?",
+            (limit,)).fetchall()
+    return {"unit": unit, "sets": [
+        {"id": r["id"], "exercise": r["exercise_name"], "group": r["primary_group"],
+         "weight": _out(r["weight_kg"], unit), "reps": r["reps"], "e1rm": _out(r["e1rm_kg"], unit),
+         "timestamp": r["timestamp"]} for r in rows]}
+
+
+# ======================================================================
+# Activities (GPS recordings from the phone) and 10-minute resets
+# ======================================================================
+def _parse_route(raw):
+    """Decode route_json into [{lat, lng, alt}], dropping anything malformed."""
+    try:
+        data = json.loads(raw) if isinstance(raw, str) else raw
+    except ValueError:
+        return []
+    out = []
+    for p in data if isinstance(data, list) else []:
+        try:
+            if isinstance(p, dict):
+                lat = p.get("lat", p.get("latitude"))
+                lng = p.get("lng", p.get("lon", p.get("longitude")))
+                alt = p.get("alt", p.get("altitude"))
+            else:
+                lat, lng, alt = p[0], p[1], (p[2] if len(p) > 2 else None)
+            lat, lng = float(lat), float(lng)
+        except (TypeError, ValueError, KeyError, IndexError):
+            continue
+        if -90 <= lat <= 90 and -180 <= lng <= 180:
+            out.append({"lat": lat, "lng": lng, "alt": alt if isinstance(alt, (int, float)) else None})
+    return out
+
+
+def _thin(points, limit=300):
+    if len(points) <= limit:
+        return points
+    step = (len(points) - 1) / (limit - 1)
+    return [points[round(i * step)] for i in range(limit)]
+
+
+@eel.expose
+def get_activities(limit=200):
+    try:
+        limit = max(1, min(int(limit), 1000))
+    except (TypeError, ValueError):
+        limit = 200
+    with db() as c:
+        rows = c.execute("SELECT * FROM activities WHERE is_deleted = 0 ORDER BY start_time DESC LIMIT ?",
+                         (limit,)).fetchall()
+        tot = c.execute(
+            """SELECT COUNT(*) AS n, COALESCE(SUM(distance_meters),0) AS d, COALESCE(SUM(duration_seconds),0) AS s,
+                      COALESCE(SUM(steps),0) AS st FROM activities WHERE is_deleted = 0""").fetchone()
+    items = []
+    for r in rows:
+        route = _parse_route(r["route_json"])
+        km = r["distance_meters"] / 1000
+        items.append({
+            "id": r["id"], "type": r["type"], "start_time": r["start_time"], "end_time": r["end_time"],
+            "distance_km": round(km, 3), "duration_seconds": r["duration_seconds"], "steps": r["steps"],
+            "pace_sec_per_km": round(r["duration_seconds"] / km) if km >= 0.05 and r["duration_seconds"] else None,
+            "route": _thin(route), "route_points": len(route)})
+    return {"activities": items,
+            "summary": {"count": tot["n"], "distance_km": round(tot["d"] / 1000, 2),
+                        "duration_seconds": tot["s"], "steps": tot["st"]}}
+
+
+@eel.expose
+def delete_activity(activity_id):
+    with db() as c:
+        c.execute("UPDATE activities SET is_deleted = 1, updated_at = ? WHERE id = ?", (now_iso(), activity_id))
+    return {"ok": True}
+
+
+@eel.expose
+def get_meditation_history(limit=100):
+    try:
+        limit = max(1, min(int(limit), 1000))
+    except (TypeError, ValueError):
+        limit = 100
+    with db() as c:
+        rows = c.execute("SELECT * FROM meditation_sessions WHERE is_deleted = 0 ORDER BY timestamp DESC LIMIT ?",
+                         (limit,)).fetchall()
+        tot = c.execute(
+            """SELECT COUNT(*) AS n, COALESCE(SUM(duration_seconds),0) AS s
+               FROM meditation_sessions WHERE is_deleted = 0""").fetchone()
+    return {"sessions": [{"id": r["id"], "timestamp": r["timestamp"], "duration_seconds": r["duration_seconds"],
+                          "sound_pattern": r["sound_pattern"]} for r in rows],
+            "summary": {"count": tot["n"], "duration_seconds": tot["s"]}}
+
+
+# ======================================================================
 # LAN sync: UDP discovery beacon + HTTP sync server (background threads)
 # ======================================================================
 _sync = {"udp": False, "http": False, "last_sync": None, "peer": None}
@@ -489,12 +817,34 @@ def _pull_records(since):
             {"key": r["key"], "value": r["value"], "updated_at": r["updated_at"]}
             for r in c.execute("SELECT * FROM settings WHERE updated_at >= ?", (since,))
         ]
+        strength_sets = [
+            {"id": r["id"], "exercise_name": r["exercise_name"], "primary_group": r["primary_group"],
+             "weight_kg": r["weight_kg"], "reps": r["reps"], "e1rm_kg": r["e1rm_kg"], "timestamp": r["timestamp"],
+             "updated_at": r["updated_at"], "is_deleted": r["is_deleted"]}
+            for r in c.execute("SELECT * FROM strength_sets WHERE updated_at >= ?", (since,))
+        ]
+        activities = [
+            {"id": r["id"], "type": r["type"], "start_time": r["start_time"], "end_time": r["end_time"],
+             "distance_meters": r["distance_meters"], "duration_seconds": r["duration_seconds"],
+             "steps": r["steps"], "route_json": r["route_json"],
+             "updated_at": r["updated_at"], "is_deleted": r["is_deleted"]}
+            for r in c.execute("SELECT * FROM activities WHERE updated_at >= ?", (since,))
+        ]
+        meditation_sessions = [
+            {"id": r["id"], "timestamp": r["timestamp"], "duration_seconds": r["duration_seconds"],
+             "sound_pattern": r["sound_pattern"], "updated_at": r["updated_at"], "is_deleted": r["is_deleted"]}
+            for r in c.execute("SELECT * FROM meditation_sessions WHERE updated_at >= ?", (since,))
+        ]
     return {"ok": True, "server_time": now_iso(),
-            "tasks": tasks, "completions": completions, "weights": weights, "settings": settings}
+            "tasks": tasks, "completions": completions, "weights": weights, "settings": settings,
+            "strength_sets": strength_sets, "activities": activities, "meditation_sessions": meditation_sessions}
 
 
 def _apply_push(p):
-    """Merge mobile records into the local DB. Last-write-wins on updated_at."""
+    """Merge mobile records into the local DB. Last-write-wins on updated_at.
+    Returns (synced_at, skipped): malformed strength/activity/meditation records are skipped, not fatal,
+    so one bad row can never block a phone's sync forever."""
+    skipped = 0
     with db() as c:
         for r in p.get("tasks", []):
             row = c.execute("SELECT updated_at FROM tasks WHERE uid = ?", (r["uid"],)).fetchone()
@@ -539,9 +889,74 @@ def _apply_push(p):
                    WHERE excluded.updated_at > settings.updated_at""",
                 (r["key"], r["value"], r["updated_at"]),
             )
+        # ---- v5 entities: UUID-keyed, last-write-wins on updated_at ----
+        for r in p.get("strength_sets") or []:
+            try:
+                sid, name = str(r["id"]).strip(), str(r["exercise_name"]).strip()
+                group, upd = str(r["primary_group"]).upper(), str(r["updated_at"])
+                kg, e1 = float(r["weight_kg"]), float(r["e1rm_kg"])
+                reps, ts = int(r["reps"]), int(r["timestamp"])
+                if not (sid and name and group in GROUP_KEYS and ISO_RE.match(upd)
+                        and 0 <= kg <= 1000 and 0 < e1 <= 5000 and 1 <= reps <= 30 and ts > 0):
+                    raise ValueError("out of range")
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+                continue
+            c.execute(
+                """INSERT INTO strength_sets (id, exercise_name, primary_group, weight_kg, reps, e1rm_kg,
+                                              timestamp, updated_at, is_deleted) VALUES (?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     exercise_name = excluded.exercise_name, primary_group = excluded.primary_group,
+                     weight_kg = excluded.weight_kg, reps = excluded.reps, e1rm_kg = excluded.e1rm_kg,
+                     timestamp = excluded.timestamp, updated_at = excluded.updated_at,
+                     is_deleted = excluded.is_deleted
+                   WHERE excluded.updated_at > strength_sets.updated_at""",
+                (sid, name, group, kg, reps, e1, ts, upd, int(bool(r.get("is_deleted")))))
+        for r in p.get("activities") or []:
+            try:
+                aid, upd = str(r["id"]).strip(), str(r["updated_at"])
+                start, end = int(r["start_time"]), int(r.get("end_time") or r["start_time"])
+                dist, dur, steps = float(r.get("distance_meters") or 0), int(r.get("duration_seconds") or 0), int(r.get("steps") or 0)
+                route = r.get("route_json") or "[]"
+                if not isinstance(route, str):
+                    route = json.dumps(route)
+                if not (aid and ISO_RE.match(upd) and start > 0 and dist >= 0 and dur >= 0 and steps >= 0):
+                    raise ValueError("out of range")
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+                continue
+            c.execute(
+                """INSERT INTO activities (id, type, start_time, end_time, distance_meters, duration_seconds,
+                                           steps, route_json, updated_at, is_deleted) VALUES (?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     type = excluded.type, start_time = excluded.start_time, end_time = excluded.end_time,
+                     distance_meters = excluded.distance_meters, duration_seconds = excluded.duration_seconds,
+                     steps = excluded.steps, route_json = excluded.route_json,
+                     updated_at = excluded.updated_at, is_deleted = excluded.is_deleted
+                   WHERE excluded.updated_at > activities.updated_at""",
+                (aid, str(r.get("type") or "Workout"), start, end, dist, dur, steps, route, upd,
+                 int(bool(r.get("is_deleted")))))
+        for r in p.get("meditation_sessions") or []:
+            try:
+                mid, upd = str(r["id"]).strip(), str(r["updated_at"])
+                ts, dur = int(r["timestamp"]), int(r["duration_seconds"])
+                if not (mid and ISO_RE.match(upd) and ts > 0 and dur >= 0):
+                    raise ValueError("out of range")
+            except (KeyError, TypeError, ValueError):
+                skipped += 1
+                continue
+            c.execute(
+                """INSERT INTO meditation_sessions (id, timestamp, duration_seconds, sound_pattern, updated_at, is_deleted)
+                   VALUES (?,?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET
+                     timestamp = excluded.timestamp, duration_seconds = excluded.duration_seconds,
+                     sound_pattern = excluded.sound_pattern, updated_at = excluded.updated_at,
+                     is_deleted = excluded.is_deleted
+                   WHERE excluded.updated_at > meditation_sessions.updated_at""",
+                (mid, ts, dur, str(r.get("sound_pattern") or ""), upd, int(bool(r.get("is_deleted")))))
         synced_at = now_iso()
         meta_set(c, "last_synced_at", synced_at)
-    return synced_at
+    return synced_at, skipped
 
 
 class SyncHandler(BaseHTTPRequestHandler):
@@ -577,9 +992,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             if self.path == "/api/v1/sync/pull":
                 return self._send(200, _pull_records(body.get("since") or EPOCH))
             if self.path == "/api/v1/sync/push":
-                synced_at = _apply_push(body)
+                synced_at, skipped = _apply_push(body)
                 _mark_synced(self.client_address[0])
-                return self._send(200, {"ok": True, "synced_at": synced_at})
+                return self._send(200, {"ok": True, "synced_at": synced_at, "skipped": skipped})
             self._send(404, {"ok": False, "error": "not found"})
         except (ValueError, KeyError, TypeError) as e:
             self._send(400, {"ok": False, "error": f"bad request: {e}"})
