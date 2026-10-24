@@ -1,102 +1,137 @@
-# Themis Task Manager
+# Themis Task Manager & Health Hub
 
 *Liberating data. Replacing paywalls. People's app.*
 
-A private, offline-first habit and weight tracker with a desktop app and an Android app that sync directly with each other over your home Wi-Fi. No account, no cloud, no subscription. Your data lives in a local SQLite database on the desktop and in a Room database on the phone.
+A private, offline-first habit, weight, strength, activity tracking, and mindfulness app. It features a desktop app (Python/Eel) and an Android app (Jetpack Compose/Room) that sync directly with each other over your home Wi-Fi—with no account, no cloud, and no subscription.
 
-## Features
+Your data lives in a local SQLite database on the desktop and a Room database on the mobile device.
 
-- **Daily tasks** that repeat every day, with a GitHub-style 26-week consistency heatmap, current streak, perfect days and an "average day" completion chart.
-- **One-off tasks**: do it once, tick it, and it's done for good. They never affect the heatmap, streak or averages.
-- **Weight tracker**: 6-month line chart, latest / change / lowest / highest figures, kg or lb (stored as kg).
-- **Daily quote** from ZenQuotes (hidden when offline).
-- **Automatic LAN sync** between desktop and Android, with no setup: the phone finds the desktop on its own.
-- **Water reminders** *(Android only)*: a notification every 30 minutes with a quote.
+---
 
-## Repository layout
+## Key Features
 
+### Habits & Tasks
+- **Daily Tasks:** Tasks that repeat every day. Includes a GitHub-style 26-week consistency heatmap, current streak counter, perfect days tracker, and an "average day" completion chart.
+- **One-off Tasks:** Standalone items that do not affect heatmaps, streaks, or daily averages.
+
+### Weight Tracking
+- **6-Month Progress Chart:** Visual line chart of bodyweight over time.
+- **Key Metrics:** Tracks latest weight, 6-month change, lowest, and highest records.
+- **Flexible Units:** Supports `kg` or `lb` (stored internally as kg).
+
+### Muscle Strength & Workout Logging *(Android)*
+- **Strength Ranks:** Ranks muscle groups based on estimated 1-Rep Max (1RM) using Epley's formula over a 30-day rolling window.
+- **Tier Ladder:** Tracks progress through rank tiers (from Beginner up to Olympian levels).
+- **Bodyweight Calculations:** Pull-ups, dips, and other bodyweight exercises automatically incorporate logged bodyweight.
+- **Rank Sharing:** Export and share visual cards displaying your muscle strength tier standings.
+
+### Outdoor Activity Tracking *(Android)*
+- **GPS Route Recording:** Track runs and walks with real-time vector map rendering (via MapLibre).
+- **Location Filtering:** Includes Kalman location filtering and Douglas-Peucker path simplification to optimize route accuracy and storage.
+- **Live Metrics:** Shows live distance, duration, pace, and step count.
+- **Background Tracking:** Handles location tracking seamlessly in background services.
+
+### 10-Minute ADHD Reset & Meditation *(Android)*
+- **Breathing Patterns:** Guided visual and tactile box breathing (4-4-4-4) and calm breathing (4-7-8).
+- **Ambient Soundscapes:** Seamless ambient audio loops (White Noise, Rain, Brown Noise, Soft Pad) powered by ExoPlayer.
+- **Haptic Guidance:** Optional pulse vibrations for breathing state transitions.
+
+### Reminders & Motivation
+- **Daily Quotes:** ZenQuotes integration (gracefully hidden when offline).
+- **Water Reminders *(Android)*:** Optional interval notification reminders every 30 minutes with customizable quiet hours (default: 22:00 to 07:00).
+
+### Seamless LAN Sync
+- **Automatic Peer-to-Peer Sync:** Automatic device discovery over local Wi-Fi without server setup.
+
+---
+
+## Repository Layout
+
+```text
+main.py                 Desktop backend (Eel + SQLite) and LAN sync server
+web/                    Desktop frontend (HTML, CSS, JavaScript)
+themis-mobile/          Android application (Kotlin, Jetpack Compose, Room, Hilt, MapLibre)
 ```
-main.py                 Desktop backend (Eel + SQLite) and the sync server
-web/                    Desktop frontend (index.html, style.css, app.js)
-themis-mobile/          Android app (Kotlin, Jetpack Compose, Room)
-```
 
-## Desktop app
+---
 
-**Requirements:** Python 3.9+, SQLite 3.24+ (bundled with modern Python), and Chrome or Edge (Eel opens its window with one of them).
+## Getting Started
+
+### 1. Desktop App
+
+**Requirements:** Python 3.9+, SQLite 3.24+, and Google Chrome or Microsoft Edge.
 
 ```bash
 pip install eel
 python main.py
 ```
 
-On first launch the database (`progress.db`) is created or upgraded in place. Before any upgrade a backup is saved next to it as `progress.db.v<old-version>.bak`.
+* On first launch, the local database (`progress.db`) is automatically initialized or upgraded.
+* Automatic backups are created before database upgrades (`progress.db.v<old-version>.bak`).
 
-The header shows a sync indicator:
-
-| Dot | Meaning |
+#### Sync Status Indicator
+| Indicator Dot | Meaning |
 |---|---|
-| Green | Connected, last sync under a minute ago |
-| Amber | Searching for a phone |
-| Red | Offline / sync services failed to start (for example a port is already in use) |
+| **Green** | Connected and synced |
+| **Amber** | Searching for mobile client |
+| **Red** | Offline / Port binding error |
 
-## Android app
+---
 
-**Requirements:** Android Studio (Koala or newer), JDK 17. The app supports Android 8.0+ (API 26) and targets API 34.
+### 2. Android App
 
-1. Open the `themis-mobile` folder in Android Studio and let Gradle sync.
-2. Run it on a phone connected to the **same Wi-Fi** as the desktop.
-3. Start the desktop app. Within a few seconds both sync dots turn green.
+**Requirements:** Android Studio (Koala or newer), JDK 17, Android 8.0+ (API 26+), targeting API 34.
 
-The app syncs when opened, every 30 seconds while visible, and every 15 minutes in the background on Wi-Fi.
+1. Open `themis-mobile` in Android Studio and let Gradle synchronize dependencies.
+2. Ensure your phone and PC are connected to the **same Wi-Fi network**.
+3. Launch the desktop app first, then launch the mobile app.
 
-### Water reminders
+---
 
-Every 30 minutes the phone shows "Time to drink water" with a ZenQuotes quote (water-only text if offline). The bell icon in the top bar turns them on or off, and Android 13+ asks for notification permission on first launch.
+## Architecture & Peer-to-Peer Sync
 
-- **Quiet hours** are 22:00 to 07:00. Change `QUIET_START_HOUR` / `QUIET_END_HOUR` in `reminder/WaterReminder.kt` (set them equal for 24/7).
-- Reminders run through WorkManager, so Android may delay one by a few minutes under Doze or battery saver. For tighter timing set the app's battery usage to *Unrestricted*.
+The desktop acts as the sync server while the mobile application operates as the client worker thread.
 
-## How sync works
+```text
++-------------------+                    +-------------------+
+|   Android App     |                    |    Desktop App    |
+|   (Room DB)       |                    |    (SQLite DB)    |
++---------+---------+                    +---------+---------+
+          |                                        |
+          | --- UDP Broadcast (Port 54321) ------> | Discovery Ping
+          | <-- UDP Response (Sync Port) --------- |
+          |                                        |
+          | --- HTTP GET/POST (Port 54322) -------> | Pull & Merge
+          | <-- HTTP Push ------------------------ | Push local edits
+```
 
-The desktop runs two background threads; the phone is the client.
+### Sync Details
+- **Discovery Protocol:** Mobile client broadcasts `THEMIS_DISCOVERY_PING` over UDP port **54321**.
+- **Transport:** Standard HTTP REST endpoints running over TCP port **54322** (`/api/v1/sync/status`, `/api/v1/sync/pull`, `/api/v1/sync/push`).
+- **Conflict Resolution:** **Last-Write-Wins (LWW)** based on UTC ISO-8601 timestamps (`updated_at`).
+- **Soft Deletions:** Deleting tasks, strength logs, or weight entries sets an `is_deleted` flag so the deletion propagates reliably across devices.
+- **UUID Identity:** Items use UUID keys (`uid`) to avoid primary key collisions across multi-device syncs.
 
-| Step | Detail |
-|---|---|
-| Discovery | Phone broadcasts `THEMIS_DISCOVERY_PING` to UDP **54321**. The desktop replies with its name and sync port. |
-| Transport | HTTP on TCP **54322**: `GET /api/v1/sync/status`, `POST /api/v1/sync/pull`, `POST /api/v1/sync/push`. |
-| Flow | Phone pulls everything changed since its last sync, merges it, then pushes its own changes. |
-| Conflicts | **Last-write-wins** on UTC ISO-8601 `updated_at` timestamps. A record only overwrites another if it is strictly newer. |
+---
 
-Design notes:
+## Troubleshooting & Firewall Settings
 
-- **Soft deletes.** Deleting a task, un-ticking a completion or removing a weight sets `is_deleted` rather than removing the row, so the deletion can travel to the other device.
-- **Task identity.** Tasks carry a UUID (`uid`), because auto-increment IDs on two devices would collide. Completions reference tasks by `task_uid` when syncing.
-- **One-off tasks** are ordinary task records with `is_one_off` and `is_done` flags, so they sync like any other edit.
-- Both devices should have roughly correct clocks, since conflicts are decided by timestamps.
+- **Desktop Stays Amber:** Ensure Python is allowed through host firewall settings for UDP port **54321** and TCP port **54322**. Ensure router **AP Isolation** or **Client Isolation** is turned off.
+- **Emulator Syncing:** Emulators behind NAT cannot receive UDP broadcasts; the mobile app automatically falls back to target `10.0.2.2:54322`.
+- **Water Reminders / Background Services:** Ensure battery optimization settings for the mobile app are set to *Unrestricted* if Android suspends background notifications or activity recording.
 
-### Database versions
+---
 
-| Version | Adds |
-|---|---|
-| 1 | Tasks and completions |
-| 2 | Weights and settings |
-| 3 | Sync columns (`updated_at`, `is_deleted`, `uid`), `device_meta` |
-| 4 | One-off tasks (`is_one_off`, `is_done`) |
+## Security Note
 
-The Android Room database is at version 2 (v1 to v2 adds one-off tasks) and migrates existing data.
+The local sync endpoint operates **without network authentication** under the assumption that it runs inside a trusted, isolated home network. Avoid running the sync engine on public or shared Wi-Fi networks.
 
-## Troubleshooting
+---
 
-- **Desktop stays amber.** Allow Python through the firewall for UDP 54321 and TCP 54322, and turn off any router "AP isolation" or "client isolation" setting.
-- **Emulator.** Emulators sit behind NAT and never receive UDP broadcasts, so the app falls back to `10.0.2.2:54322` automatically.
-- **Red dot at startup.** Another program is probably using port 54321 or 54322.
-- **No reminders.** Check the bell is on, notification permission is granted, it's outside quiet hours, and battery saver isn't restricting the app.
+## Design System
 
-## Security note
-
-The sync server has **no authentication**: any device on the same network can read or write your data while the desktop app is running. That is fine on a trusted home network; avoid running it on shared or public Wi-Fi. A pairing token is the natural next step.
-
-## Design
-
-Colours and typography follow one set of tokens across both apps: background `#E8EDF0`, surface `#F7F9FA`, ink `#1C2830`, accent teal `#1F6F62`, serif headings with a system sans body.
+Color palettes and typography follow unified design tokens across both client applications:
+- **Background:** `#E8EDF0`
+- **Surface:** `#F7F9FA`
+- **Ink / Text:** `#1C2830`
+- **Primary Accent:** `#1F6F62` (Teal)
